@@ -10,6 +10,8 @@ import sys
 import tempfile
 import threading
 import time
+import json
+import urllib.request
 
 import uno
 from com.sun.star.beans import PropertyValue
@@ -23,9 +25,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 REPO = "edufigueiroa/PainelImpressaoCalc"
-PROJECTS_DIR = "/run/media/edufigueiroa/Backup/PROJETOS_APP"
 PIPE = f"painel_impressao_calc_{os.getuid()}"
 PAPERS = {  # 1/100 mm
     "A4": ("A4", "21 cm x 29,7 cm", 21000, 29700, "A4"),
@@ -442,25 +443,19 @@ class Updater(QObject):
     def parse(tag):
         return tuple(int(p) for p in tag.lstrip("v").split(".") if p.isdigit())
 
-    def gh(self, *args, timeout=30):
-        env = dict(os.environ)
-        for key in ("LD_LIBRARY_PATH", "PYTHONHOME", "PYTHONPATH"):
-            env.pop(key, None)
-        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
-
     def check(self):
         threading.Thread(target=self._check, daemon=True).start()
 
     def _check(self):
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{self.repo}/releases/latest",
+            headers={"Accept": "application/vnd.github+json", "User-Agent": "painel-impressao-calc"})
         try:
-            result = self.gh("api", f"repos/{self.repo}/releases/latest", "--jq", ".tag_name")
-        except (OSError, subprocess.TimeoutExpired):
-            self.finished.emit("error", "Não foi possível consultar o GitHub.")
+            with urllib.request.urlopen(request, timeout=20) as response:
+                tag = json.load(response)["tag_name"]
+        except (OSError, ValueError, KeyError):
+            self.finished.emit("error", "Não foi possível consultar o GitHub. Confira a internet.")
             return
-        if result.returncode != 0:
-            self.finished.emit("error", "Não foi possível consultar o GitHub. Confira a internet e o login (gh auth status).")
-            return
-        tag = result.stdout.strip()
         if self.parse(tag) > self.parse(self.version):
             self.finished.emit("newer", tag)
         else:
@@ -473,8 +468,9 @@ class Updater(QObject):
         temp = tempfile.mkdtemp(prefix="atualizacao-")
         try:
             source = os.path.join(temp, "src")
-            result = self.gh("repo", "clone", self.repo, source, "--", "--depth", "1", "--branch", tag,
-                             timeout=180)
+            result = subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", tag,
+                                     f"https://github.com/{self.repo}.git", source],
+                                    capture_output=True, text=True, timeout=180)
             if result.returncode != 0:
                 self.finished.emit("failed", result.stderr.strip()[-400:] or "Falha ao baixar.")
                 return
@@ -483,10 +479,6 @@ class Updater(QObject):
             if result.returncode != 0:
                 self.finished.emit("failed", (result.stderr or result.stdout).strip()[-400:])
                 return
-            project = os.path.join(PROJECTS_DIR, self.folder)
-            if os.path.isdir(os.path.join(project, ".git")):
-                subprocess.run(["git", "-C", project, "pull", "--ff-only", "-q"], capture_output=True,
-                               timeout=120)
             self.finished.emit("updated", tag)
         except (OSError, subprocess.TimeoutExpired) as error:
             self.finished.emit("failed", str(error))

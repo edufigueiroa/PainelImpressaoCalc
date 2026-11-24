@@ -3,7 +3,37 @@ import os
 import subprocess
 import threading
 
-PANEL = os.path.expanduser("~/.local/share/painel-impressao-calc/panel.py")
+import uno
+
+EXTENSION_ID = "local.painelimpressao.calc"
+INSTALLED_PANEL = os.path.expanduser("~/.local/share/painel-impressao-calc/panel.py")
+
+
+def _version(path):
+    try:
+        with open(path, encoding="utf-8") as source:
+            for line in source:
+                if line.startswith("VERSION = "):
+                    return tuple(int(part) for part in line.split('"')[1].split("."))
+    except (OSError, ValueError, IndexError):
+        pass
+    return ()
+
+
+def _panel_path():
+    """Usa o painel que vem dentro da extensão, ou o instalado pelo install.sh se for mais novo."""
+    candidates = []
+    try:
+        context = XSCRIPTCONTEXT.getComponentContext()
+        provider = context.getByName("/singletons/com.sun.star.deployment.PackageInformationProvider")
+        location = provider.getPackageLocation(EXTENSION_ID)
+        if location:
+            candidates.append(os.path.join(uno.fileUrlToSystemPath(location), "bin", "panel.py"))
+    except Exception:
+        pass
+    candidates.append(INSTALLED_PANEL)
+    candidates = [path for path in candidates if os.path.exists(path)]
+    return max(candidates, key=_version) if candidates else None
 
 
 def _own_page_style(doc, sheet):
@@ -60,7 +90,10 @@ def abrir_painel(*_args):
     for key in ("LD_LIBRARY_PATH", "PYTHONHOME", "PYTHONPATH", "URE_BOOTSTRAP", "UNO_PATH",
                 "QT_PLUGIN_PATH", "SAL_USE_VCLPLUGIN"):
         env.pop(key, None)
-    subprocess.Popen(["/usr/bin/python3", PANEL, "--doc", str(doc.RuntimeUID)], env=env,
+    panel = _panel_path()
+    if panel is None:
+        return
+    subprocess.Popen(["/usr/bin/python3", panel, "--doc", str(doc.RuntimeUID)], env=env,
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                      stderr=subprocess.DEVNULL, start_new_session=True)
 

@@ -39,6 +39,9 @@ def main():
     for kind in ("painel", "largura"):
         for size in (16, 26):
             draw_icon(kind, size).save(icons / f"{kind}_{size}.png")
+    bundled = SOURCE / "bin"
+    bundled.mkdir(exist_ok=True)
+    (bundled / "panel.py").write_bytes((ROOT / "panel.py").read_bytes())
     OUTPUT.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(OUTPUT, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(SOURCE.rglob("*")):
