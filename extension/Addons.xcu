@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:component-data xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" oor:name="Addons" oor:package="org.openoffice.Office">
+  <node oor:name="AddonUI">
+    <node oor:name="OfficeMenuBarMerging">
+      <node oor:name="local.painelimpressao.menu" oor:op="replace">
+        <node oor:name="M1" oor:op="replace">
+          <prop oor:name="MergePoint"><value>.uno:PickList\.uno:Print</value></prop>
+          <prop oor:name="MergeCommand"><value>AddAfter</value></prop>
+          <prop oor:name="MergeFallback"><value>AddPath</value></prop>
+          <prop oor:name="MergeContext"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+          <node oor:name="MenuItems">
+            <node oor:name="A1" oor:op="replace">
+              <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$abrir_painel?language=Python&amp;location=user:uno_packages</value></prop>
+              <prop oor:name="Title" oor:type="xs:string"><value>Painel de impressão...</value></prop>
+              <prop oor:name="Target"><value>_self</value></prop>
+              <prop oor:name="Context"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+            </node>
+            <node oor:name="A2" oor:op="replace">
+              <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$ajustar_largura?language=Python&amp;location=user:uno_packages</value></prop>
+              <prop oor:name="Title" oor:type="xs:string"><value>Ajustar colunas à largura da página</value></prop>
+              <prop oor:name="Target"><value>_self</value></prop>
+              <prop oor:name="Context"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+            </node>
+          </node>
+        </node>
+      </node>
+    </node>
+    <node oor:name="OfficeToolbarMerging">
+      <node oor:name="local.painelimpressao.toolbar" oor:op="replace">
+        <node oor:name="T1" oor:op="replace">
+          <prop oor:name="MergeToolBar"><value>standardbar</value></prop>
+          <prop oor:name="MergePoint"><value>.uno:PrintPreview</value></prop>
+          <prop oor:name="MergeCommand"><value>AddAfter</value></prop>
+          <prop oor:name="MergeFallback"><value>AddLast</value></prop>
+          <prop oor:name="MergeContext"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+          <node oor:name="ToolBarItems">
+            <node oor:name="B1" oor:op="replace">
+              <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$abrir_painel?language=Python&amp;location=user:uno_packages</value></prop>
+              <prop oor:name="Title" oor:type="xs:string"><value>Painel de impressão</value></prop>
+              <prop oor:name="Target"><value>_self</value></prop>
+              <prop oor:name="Context"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+            </node>
+            <node oor:name="B2" oor:op="replace">
+              <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$ajustar_largura?language=Python&amp;location=user:uno_packages</value></prop>
+              <prop oor:name="Title" oor:type="xs:string"><value>Ajustar colunas à largura da página</value></prop>
+              <prop oor:name="Target"><value>_self</value></prop>
+              <prop oor:name="Context"><value>com.sun.star.sheet.SpreadsheetDocument</value></prop>
+            </node>
+          </node>
+        </node>
+      </node>
+    </node>
+    <node oor:name="Images">
+      <node oor:name="local.painelimpressao.img1" oor:op="replace">
+        <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$abrir_painel?language=Python&amp;location=user:uno_packages</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL"><value>%origin%/icons/painel_16.png</value></prop>
+          <prop oor:name="ImageBigURL"><value>%origin%/icons/painel_26.png</value></prop>
+        </node>
+      </node>
+      <node oor:name="local.painelimpressao.img2" oor:op="replace">
+        <prop oor:name="URL"><value>vnd.sun.star.script:PainelImpressaoCalc.oxt|python|painel_impressao.py$ajustar_largura?language=Python&amp;location=user:uno_packages</value></prop>
+        <node oor:name="UserDefinedImages">
+          <prop oor:name="ImageSmallURL"><value>%origin%/icons/largura_16.png</value></prop>
+          <prop oor:name="ImageBigURL"><value>%origin%/icons/largura_26.png</value></prop>
+        </node>
+      </node>
+    </node>
+  </node>
+</oor:component-data>
