@@ -23,6 +23,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+VERSION = "1.1.0"
+REPO = "edufigueiroa/PainelImpressaoCalc"
+PROJECTS_DIR = "/run/media/edufigueiroa/Backup/PROJETOS_APP"
 PIPE = f"painel_impressao_calc_{os.getuid()}"
 PAPERS = {  # 1/100 mm
     "A4": ("A4", "21 cm x 29,7 cm", 21000, 29700, "A4"),
@@ -425,6 +428,96 @@ class Engine(QObject):
             pass
 
 
+class Updater(QObject):
+    """Procura versão nova na página de versões do GitHub e reinstala pelo install.sh do projeto."""
+    finished = Signal(str, str)  # tipo (newer, current, error, updated, failed), detalhe
+
+    def __init__(self, repo, folder, version):
+        super().__init__()
+        self.repo = repo
+        self.folder = folder
+        self.version = version
+
+    @staticmethod
+    def parse(tag):
+        return tuple(int(p) for p in tag.lstrip("v").split(".") if p.isdigit())
+
+    def gh(self, *args, timeout=30):
+        env = dict(os.environ)
+        for key in ("LD_LIBRARY_PATH", "PYTHONHOME", "PYTHONPATH"):
+            env.pop(key, None)
+        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
+
+    def check(self):
+        threading.Thread(target=self._check, daemon=True).start()
+
+    def _check(self):
+        try:
+            result = self.gh("api", f"repos/{self.repo}/releases/latest", "--jq", ".tag_name")
+        except (OSError, subprocess.TimeoutExpired):
+            self.finished.emit("error", "Não foi possível consultar o GitHub.")
+            return
+        if result.returncode != 0:
+            self.finished.emit("error", "Não foi possível consultar o GitHub. Confira a internet e o login (gh auth status).")
+            return
+        tag = result.stdout.strip()
+        if self.parse(tag) > self.parse(self.version):
+            self.finished.emit("newer", tag)
+        else:
+            self.finished.emit("current", tag)
+
+    def install(self, tag):
+        threading.Thread(target=self._install, args=(tag,), daemon=True).start()
+
+    def _install(self, tag):
+        temp = tempfile.mkdtemp(prefix="atualizacao-")
+        try:
+            source = os.path.join(temp, "src")
+            result = self.gh("repo", "clone", self.repo, source, "--", "--depth", "1", "--branch", tag,
+                             timeout=180)
+            if result.returncode != 0:
+                self.finished.emit("failed", result.stderr.strip()[-400:] or "Falha ao baixar.")
+                return
+            result = subprocess.run(["bash", os.path.join(source, "install.sh")], capture_output=True,
+                                    text=True, timeout=300, cwd=source)
+            if result.returncode != 0:
+                self.finished.emit("failed", (result.stderr or result.stdout).strip()[-400:])
+                return
+            project = os.path.join(PROJECTS_DIR, self.folder)
+            if os.path.isdir(os.path.join(project, ".git")):
+                subprocess.run(["git", "-C", project, "pull", "--ff-only", "-q"], capture_output=True,
+                               timeout=120)
+            self.finished.emit("updated", tag)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            self.finished.emit("failed", str(error))
+        finally:
+            shutil.rmtree(temp, ignore_errors=True)
+
+
+def update_dialog_handler(parent, updater, label):
+    """Liga as respostas do Updater às mensagens da janela."""
+    def on_finished(kind, detail):
+        label.setEnabled(True)
+        if kind == "newer":
+            answer = QMessageBox.question(parent, "Atualizações",
+                                          f"Há uma versão nova: {detail}.\nVersão instalada: {updater.version}.\n\nAtualizar agora?")
+            if answer == QMessageBox.StandardButton.Yes:
+                label.setEnabled(False)
+                label.setText("Atualizando…")
+                updater.install(detail)
+            else:
+                label.setText(f"Versão {updater.version} · Verificar atualizações")
+        elif kind == "current":
+            label.setText(f"Versão {updater.version} · Você já tem a versão mais nova")
+        elif kind == "updated":
+            label.setText(f"Atualizado para {detail}")
+            QMessageBox.information(parent, "Atualizações", f"Atualizado para {detail}. Feche e abra de novo para usar a versão nova.")
+        else:
+            label.setText(f"Versão {updater.version} · Verificar atualizações")
+            QMessageBox.warning(parent, "Atualizações", detail)
+    updater.finished.connect(on_finished)
+
+
 class Choice(QPushButton):
     """Botão de duas linhas com menu, no estilo do painel de impressão do Excel."""
     changed = Signal(object)
@@ -716,6 +809,12 @@ class Window(QWidget):
         self.save_button.setToolTip("Guarda estes ajustes na planilha sem imprimir")
         self.save_button.clicked.connect(lambda: self.engine.post("apply", self.collect()))
         self.left.addWidget(self.save_button)
+        self.update_link = QToolButton(text=f"Versão {VERSION} · Verificar atualizações")
+        self.update_link.setAutoRaise(True)
+        self.updater = Updater(REPO, "PainelImpressaoCalc", VERSION)
+        update_dialog_handler(self, self.updater, self.update_link)
+        self.update_link.clicked.connect(self.check_updates)
+        self.left.addWidget(self.update_link, alignment=Qt.AlignmentFlag.AlignLeft)
         self.left.addStretch()
         return scroll
 
@@ -748,6 +847,11 @@ class Window(QWidget):
         bar.addWidget(close)
         column.addLayout(bar)
         return panel
+
+    def check_updates(self):
+        self.update_link.setEnabled(False)
+        self.update_link.setText("Procurando atualizações…")
+        self.updater.check()
 
     def load_printers(self):
         self.printers, default = list_printers()
