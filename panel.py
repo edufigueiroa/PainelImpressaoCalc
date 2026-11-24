@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 REPO = "edufigueiroa/PainelImpressaoCalc"
 PIPE = f"painel_impressao_calc_{os.getuid()}"
 PAPERS = {  # 1/100 mm
@@ -952,7 +952,9 @@ class Window(QWidget):
         self.page_total.setText(f"de {count}")
         self.preview.show_page(pdf, page - 1)
         self.update_page_buttons()
-        self.status.setText(f"{count} página{'s' if count != 1 else ''}")
+        pages = f"{count} página{'s' if count != 1 else ''}"
+        self.status.setText(pages)
+        self.print_button.setText(f"Imprimir\n{pages}")
 
     def on_page(self, value):
         if self.pdf:
