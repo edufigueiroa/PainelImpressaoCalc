@@ -1,22 +1,20 @@
 #!/bin/bash
-# Instala o painel de impressão. O painel é atualizado sempre; a extensão (menu e botões)
-# só é reinstalada com o LibreOffice fechado.
+# Gera a extensão e instala no LibreOffice deste usuário (Linux e macOS).
+# O LibreOffice precisa estar fechado. No Windows, instale o .oxt pelo Gerenciador de extensões.
 set -euo pipefail
-cd "$(dirname "$(readlink -f "$0")")"
+cd "$(dirname "$0")"
 
-install -Dm755 panel.py "$HOME/.local/share/painel-impressao-calc/panel.py"
-echo "Painel instalado."
-
-if pgrep -x soffice.bin >/dev/null; then
-    if unopkg list 2>/dev/null | grep -q "Identifier: local.painelimpressao.calc"; then
-        echo "O menu e os botões do LibreOffice já estão instalados."
-        exit 0
-    fi
-    echo "Feche o LibreOffice e execute de novo para instalar o menu e os botões." >&2
+if pgrep -x soffice.bin >/dev/null 2>&1 || pgrep -x soffice >/dev/null 2>&1; then
+    echo "Feche o LibreOffice e execute de novo." >&2
     exit 1
 fi
 
+UNOPKG=$(command -v unopkg || true)
+[ -z "$UNOPKG" ] && [ -x /Applications/LibreOffice.app/Contents/MacOS/unopkg ] && UNOPKG=/Applications/LibreOffice.app/Contents/MacOS/unopkg
+[ -z "$UNOPKG" ] && { echo "unopkg não encontrado. Instale o LibreOffice." >&2; exit 1; }
+
 python3 build.py
-unopkg remove local.painelimpressao.calc >/dev/null 2>&1 || true
-unopkg add dist/PainelImpressaoCalc.oxt
+"$UNOPKG" remove local.painelimpressao.calc >/dev/null 2>&1 || true
+"$UNOPKG" add dist/PainelImpressaoCalc.oxt
+rm -rf "$HOME/.local/share/painel-impressao-calc"   # painel antigo (até a 1.1.x), não é mais usado
 echo "Instalado. Abra o Calc."

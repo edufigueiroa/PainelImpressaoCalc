@@ -39,13 +39,10 @@ def main():
     for kind in ("painel", "largura"):
         for size in (16, 26):
             draw_icon(kind, size).save(icons / f"{kind}_{size}.png")
-    bundled = SOURCE / "bin"
-    bundled.mkdir(exist_ok=True)
-    (bundled / "panel.py").write_bytes((ROOT / "panel.py").read_bytes())
     OUTPUT.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(OUTPUT, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(SOURCE.rglob("*")):
-            if path.is_file() and "__pycache__" not in path.parts:
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
                 archive.write(path, path.relative_to(SOURCE).as_posix())
     print(OUTPUT)
 

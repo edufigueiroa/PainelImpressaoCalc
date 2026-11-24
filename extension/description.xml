@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<description xmlns="http://openoffice.org/extensions/description/2006" xmlns:d="http://openoffice.org/extensions/description/2006" xmlns:xlink="http://www.w3.org/1999/xlink">
+<description xmlns="http://openoffice.org/extensions/description/2006" xmlns:d="http://openoffice.org/extensions/description/2006" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:l="http://libreoffice.org/extensions/description/2011">
   <identifier value="local.painelimpressao.calc"/>
-  <version value="1.1.4"/>
+  <version value="1.2.0"/>
   <display-name>
     <name lang="pt-BR">Painel de impressão do Calc</name>
   </display-name>
+  <publisher>
+    <name xlink:href="https://github.com/edufigueiroa/PainelImpressaoCalc" lang="pt-BR">PainelImpressaoCalc no GitHub</name>
+  </publisher>
+  <dependencies>
+    <l:LibreOffice-minimal-version value="7.0" d:name="LibreOffice 7.0"/>
+  </dependencies>
   <update-information>
     <src xlink:href="https://raw.githubusercontent.com/edufigueiroa/PainelImpressaoCalc/main/update.xml"/>
   </update-information>
