@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 REPO = "edufigueiroa/PainelImpressaoCalc"
 PIPE = f"painel_impressao_calc_{os.getuid()}"
 PAPERS = {  # 1/100 mm

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <description xmlns="http://openoffice.org/extensions/update/2006" xmlns:xlink="http://www.w3.org/1999/xlink">
   <identifier value="local.painelimpressao.calc"/>
-  <version value="1.1.3"/>
+  <version value="1.1.4"/>
   <update-download>
-    <src xlink:href="https://github.com/edufigueiroa/PainelImpressaoCalc/releases/download/v1.1.3/PainelImpressaoCalc.oxt"/>
+    <src xlink:href="https://github.com/edufigueiroa/PainelImpressaoCalc/releases/download/v1.1.4/PainelImpressaoCalc.oxt"/>
   </update-download>
 </description>
